@@ -71,6 +71,7 @@ async def insert_customer_dim(
 async def load_customer_dim(
     session: AsyncSession,
 ) -> None:
+    """Обновление и вставка данных в Customer_Dim"""
     await create_temp_customers_table(session)
     await update_customer_dim(session)
     await insert_customer_dim(session)

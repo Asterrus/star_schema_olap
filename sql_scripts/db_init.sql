@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS Product_Dim (
 
 CREATE TABLE Sales_Fact(
     sale_sk UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sale_id UUID NOT NULL,
     product_sk UUID REFERENCES Product_Dim(product_sk),
     customer_sk UUID REFERENCES Customer_Dim(customer_sk),
     sale_date DATE NOT NULL,

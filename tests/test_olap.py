@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 import pytest
 from sqlalchemy import text
@@ -8,10 +8,12 @@ from sql_scripts.customer_dim import load_customer_dim
 from sql_scripts.oltp import (
     insert_customer,
     insert_product,
+    insert_sale,
     update_customer,
     update_product,
 )
 from sql_scripts.product_dim import load_product_dim
+from sql_scripts.sales_fact import load_sales_fact
 
 
 class TestLoadDim:
@@ -112,3 +114,128 @@ class TestLoadDim:
         await load_customer_dim(session)
         count_res = await session.execute(text("SELECT COUNT(*) FROM Customer_Dim"))
         assert count_res.scalar() == 2
+
+
+async def run_etl(session: AsyncSession):
+    """Сбор данных аналитики"""
+    await load_product_dim(session)
+    await load_customer_dim(session)
+    await load_sales_fact(session)
+
+
+class TestLoadFact:
+    @pytest.mark.asyncio
+    async def test_load_sales_fact_success(self, session: AsyncSession):
+        """Тест корректной записи в таблицу Sales_Fact, проверка что не добавляются дубли"""
+        product_id = await insert_product(session, "Product 1", "Category 1")
+        customer_id = await insert_customer(
+            session,
+            name="Customer 1",
+            email="customer1@example.com",
+            phone="1234567890",
+        )
+        sale_id = await insert_sale(
+            session,
+            customer_id=customer_id,
+            product_id=product_id,
+            sale_date=date.today(),
+            amount=100.0,
+            quantity=1,
+        )
+        await run_etl(session)
+
+        result = await session.execute(text("SELECT * FROM Sales_Fact"))
+        sales_fact = result.fetchone()
+        assert sales_fact
+
+        await load_sales_fact(session)
+        result = await session.execute(text("SELECT COUNT(*) FROM Sales_Fact"))
+        assert result.scalar() == 1
+
+    @pytest.mark.asyncio
+    async def test_load_sales_fact_correct_dim_selection(self, session: AsyncSession):
+        """Тест выбора правильных записей из таблиц измерений"""
+        customer_id = await insert_customer(
+            session,
+            name="Customer 1",
+            email="customer1@example.com",
+            phone="1234567890",
+        )
+        product_id = await insert_product(session, "Product 1", "Category 1")
+        # Покупка два дня назад
+        first_sale_id = await insert_sale(
+            session,
+            customer_id=customer_id,
+            product_id=product_id,
+            sale_date=date.today() - timedelta(days=2),
+            amount=100.0,
+            quantity=1,
+        )
+
+        await run_etl(session)
+
+        # Обновляем продукт(категория) и покупателя(номер)
+        await update_product(session, product_id, "Product 1", "Category 2")
+        await update_customer(
+            session, customer_id, "Customer 1", "customer1@example.com", "1234567891"
+        )
+
+        # Сбор данных аналитики(тут должны быть созданы дополнительные записи в таблицах измерений)
+        await load_customer_dim(session)
+        await load_product_dim(session)
+        await load_sales_fact(session)
+
+        # Покупка сегодня
+        second_sale_id = await insert_sale(
+            session,
+            customer_id=customer_id,
+            product_id=product_id,
+            sale_date=date.today(),
+            amount=100.0,
+            quantity=1,
+        )
+
+        await run_etl(session)
+
+        first_sale_result = await session.execute(
+            text("SELECT * FROM Sales_Fact WHERE sale_id = :sale_id"),
+            params={"sale_id": first_sale_id},
+        )
+
+        first_sale = first_sale_result.fetchone()
+        assert first_sale
+
+        second_sale_result = await session.execute(
+            text("SELECT * FROM Sales_Fact WHERE sale_id = :sale_id"),
+            params={"sale_id": second_sale_id},
+        )
+
+        second_sale = second_sale_result.fetchone()
+        assert second_sale
+
+        # Проверяем что у продаж разные суррогатные ключи к таблицам измерений
+        assert first_sale.product_sk != second_sale.product_sk
+        assert first_sale.customer_sk != second_sale.customer_sk
+
+        # Вносим запись о покупке произошедшей день назад, до обновления таблиц измерений
+        third_sale_id = await insert_sale(
+            session,
+            customer_id=customer_id,
+            product_id=product_id,
+            sale_date=date.today() - timedelta(days=1),
+            amount=100.0,
+            quantity=1,
+        )
+
+        await run_etl(session)
+
+        third_sale_result = await session.execute(
+            text("SELECT * FROM Sales_Fact WHERE sale_id = :sale_id"),
+            params={"sale_id": third_sale_id},
+        )
+
+        third_sale = third_sale_result.fetchone()
+        # Должны быть выбраны суррогатные ключи, такие же как при первой покупке
+        assert third_sale
+        assert third_sale.product_sk == first_sale.product_sk
+        assert third_sale.customer_sk == first_sale.customer_sk

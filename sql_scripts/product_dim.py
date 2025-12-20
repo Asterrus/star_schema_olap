@@ -68,6 +68,7 @@ async def insert_product_dim(
 async def load_product_dim(
     session: AsyncSession,
 ) -> None:
+    """Обновление и вставка данных в Product_Dim"""
     await create_temp_products_table(session)
     await update_product_dim(session)
     await insert_product_dim(session)
