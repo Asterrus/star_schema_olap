@@ -17,8 +17,11 @@ from sql_scripts.sales_fact import load_sales_fact
 
 
 class TestLoadDim:
+    """Тесты загрузки данных в таблицы измерений"""
+
     @pytest.mark.asyncio
     async def test_load_product_dim_success(self, session: AsyncSession):
+        """Загрузка данных в таблицу Product_Dim"""
         product_id = await insert_product(session, "Product 1", "Category 1")
         await load_product_dim(session)
 
@@ -64,6 +67,7 @@ class TestLoadDim:
 
     @pytest.mark.asyncio
     async def test_load_customer_dim_success(self, session: AsyncSession):
+        """Загрузка данных в таблицу Customer_Dim"""
         customer_id = await insert_customer(
             session,
             name="Customer 1",
@@ -124,6 +128,8 @@ async def run_etl(session: AsyncSession):
 
 
 class TestLoadFact:
+    """Тесты загрузки данных в таблицу фактов Sales_Fact"""
+
     @pytest.mark.asyncio
     async def test_load_sales_fact_success(self, session: AsyncSession):
         """Тест корректной записи в таблицу Sales_Fact, проверка что не добавляются дубли"""

@@ -13,7 +13,9 @@ from sql_scripts.oltp import (
 )
 
 
-class TestInsert:
+class TestOLTP:
+    """Тесты вставки/обновления записей в основных таблицах OLTP"""
+
     @pytest.mark.asyncio
     async def test_insert_product_success(self, session):
         product_id = await insert_product(session, "Product 1", "Category 1")
