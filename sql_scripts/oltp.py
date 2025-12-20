@@ -58,6 +58,27 @@ async def insert_customer(
     return customer_id
 
 
+async def update_customer(
+    session: AsyncSession,
+    customer_id: UUID,
+    name: str,
+    email: str,
+    phone: str,
+):
+    q = text("""
+        UPDATE Customers
+        SET 
+          name =:name,
+          email =:email,
+          phone =:phone
+        WHERE customer_id =:customer_id
+    """)
+    await session.execute(
+        q,
+        {"name": name, "email": email, "phone": phone, "customer_id": customer_id},
+    )
+
+
 async def insert_sale(
     session: AsyncSession,
     customer_id: UUID,
