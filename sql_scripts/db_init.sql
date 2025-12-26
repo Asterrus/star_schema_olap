@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS Sales (
     sale_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id UUID NOT NULL REFERENCES Customers(customer_id),
     product_id UUID NOT NULL REFERENCES Products(product_id),
-    sale_date DATE NOT NULL,
+    sale_date TIMESTAMP NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     quantity INTEGER NOT NULL
 );
@@ -48,7 +48,7 @@ CREATE TABLE Sales_Fact(
     sale_id UUID NOT NULL,
     product_sk UUID REFERENCES Product_Dim(product_sk),
     customer_sk UUID REFERENCES Customer_Dim(customer_sk),
-    sale_date DATE NOT NULL,
+    sale_date TIMESTAMP NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     quantity INTEGER NOT NULL
 );

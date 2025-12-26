@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 import pytest
 from sqlalchemy import text
@@ -144,7 +144,7 @@ class TestLoadFact:
             session,
             customer_id=customer_id,
             product_id=product_id,
-            sale_date=date.today(),
+            sale_date=datetime.now(),
             amount=100.0,
             quantity=1,
         )
@@ -173,7 +173,7 @@ class TestLoadFact:
             session,
             customer_id=customer_id,
             product_id=product_id,
-            sale_date=date.today() - timedelta(days=2),
+            sale_date=datetime.now() - timedelta(days=2),
             amount=100.0,
             quantity=1,
         )
@@ -196,7 +196,7 @@ class TestLoadFact:
             session,
             customer_id=customer_id,
             product_id=product_id,
-            sale_date=date.today(),
+            sale_date=datetime.now(),
             amount=100.0,
             quantity=1,
         )
@@ -228,7 +228,7 @@ class TestLoadFact:
             session,
             customer_id=customer_id,
             product_id=product_id,
-            sale_date=date.today() - timedelta(days=1),
+            sale_date=datetime.now() - timedelta(days=1),
             amount=100.0,
             quantity=1,
         )

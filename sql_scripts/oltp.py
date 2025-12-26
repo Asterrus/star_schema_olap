@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import text
@@ -28,7 +28,7 @@ async def update_product(
 ):
     q = text("""
         UPDATE Products
-        SET 
+        SET
           product_name =:product_name,
           category =:category
         WHERE product_id =:product_id
@@ -67,7 +67,7 @@ async def update_customer(
 ):
     q = text("""
         UPDATE Customers
-        SET 
+        SET
           name =:name,
           email =:email,
           phone =:phone
@@ -83,7 +83,7 @@ async def insert_sale(
     session: AsyncSession,
     customer_id: UUID,
     product_id: UUID,
-    sale_date: date,
+    sale_date: datetime,
     amount: float,
     quantity: int,
 ) -> UUID:

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from uuid import UUID
 
 import pytest
@@ -73,7 +73,7 @@ class TestOLTP:
             session,
             customer_id=customer_id,
             product_id=product_id,
-            sale_date=date.today(),
+            sale_date=datetime.now(),
             amount=100.0,
             quantity=1,
         )

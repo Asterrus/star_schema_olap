@@ -11,7 +11,7 @@ async def create_temp_products_table(session: AsyncSession):
           product_name,
           category,
           md5(coalesce(product_name,'') || coalesce(category,'')) AS attr_hash
-        FROM Products 
+        FROM Products
     """
     await session.execute(text(q))
 
@@ -22,7 +22,7 @@ async def update_product_dim(
     q = """
     UPDATE Product_Dim pd
     SET
-      valid_to = CURRENT_DATE,
+      valid_to = CURRENT_TIMESTAMP,
       is_current = FALSE
     FROM products_with_hash p
     WHERE
